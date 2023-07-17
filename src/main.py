@@ -8,31 +8,16 @@ def callback():
 
 argv = sys.argv
 
-#screen
 window = tkinter.Tk()
 window.title("RAY PODCASTING")
 window.geometry("1920x1080")
 window.minsize(width=500, height=300)
 
-# #label
-# l1 = Label(text="Les profs.")
-# l1.pack(side=LEFT)
-
-# #button
-
-# bouton = Button(text="Quitter", command=window.quit)
-# bouton.pack()
-
-# #menu deroulant
-
-# mainmenu = tkinter.Menu(window)
-# menu = tkinter.Menu(mainmenu)
-# menu.add_radiobutton(label="Colors", command=(callback))
-# mainmenu.add_cascade(label="Preferences", menu=menu)
-
 rays_nb = 100 + 1
 minimap_dim = 40
 rays_length = minimap_dim * 10
+map_screen = tkinter.Canvas(window, width=250, height=250, bg='#0055a0')
+game_screen = tkinter.Canvas(window, width=1600, height=900, bg='#00eeee')
 
 class Player:
     def __init__(self, pos, point):
@@ -53,7 +38,12 @@ def load_map_from_file(argv, player, map_screen):
         if char_map[i] == 'X':
             map_screen.create_rectangle(x, y, x + minimap_dim, y + minimap_dim, fill='#FFFFFF')
         if char_map[i] == 'P':
-            player.point = map_screen.create_oval(x, y, x + minimap_dim / 2, y + minimap_dim / 2, fill='#FF0000')
+            player.point = map_screen.create_oval(
+                x,
+                y,
+                x + minimap_dim / 2,
+                y + minimap_dim / 2,
+                fill='#FF0000')
             player.pos = [x, y]
         x += minimap_dim
         if char_map[i] == '\n':
@@ -101,11 +91,18 @@ def draw_rays(player, map_screen):
             end_y,
             width=0.05, fill='#FFFF00')
 
+def center_canvas_on_player(x, y):
+    # canvas_x = x - 250 / 2
+    # canvas_y = y - 250 / 2
+    # map_screen.scan_mark(canvas_x, canvas_y)
+    map_screen.scan_dragto(int(-x + 250 / 2), int(-y + 250 / 2), gain=1)
+
 def move_player(player, direction):
     player.pos[0] += minimap_dim / 8 * math.cos(player.angle + direction * math.pi / 180)
     player.pos[1] += minimap_dim / 8 * math.sin(player.angle + direction * math.pi / 180)
     display_rays(player, map_screen)
     map_screen.coords(player.point, player.pos[0], player.pos[1], player.pos[0] + minimap_dim / 2, player.pos[1] + minimap_dim / 2)
+    center_canvas_on_player(player.pos[0], player.pos[1])
 
 def change_angle(player, direction):
     player.angle += (10 * math.pi / 180) * direction
@@ -116,10 +113,9 @@ def change_angle(player, direction):
     display_rays(player, map_screen)
 
 player = Player([0, 0], 0)
-map_screen = tkinter.Canvas(window, width=250, height=250, bg='#0055a0')
-game_screen = tkinter.Canvas(window, width=1600, height=900, bg='#00eeee')
 load_map_from_file(argv, player, map_screen)
 draw_rays(player, map_screen)
+map_screen.scan_dragto(int(-player.pos[0] + 250 / 2), int(-player.pos[1] + 250 / 2), gain=1)
 window.bind("<Escape>", lambda event : window.quit())
 window.bind("<z>", lambda event : move_player(player, 0))
 window.bind("<q>", lambda event : move_player(player, 270))
